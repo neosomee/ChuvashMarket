@@ -7,11 +7,14 @@ import {
   deleteSellerProduct,
   createSellerProduct,
   updateSellerProduct,
+  uploadSellerProductImage,
 } from "../../shared/api/seller";
 import { formatPrice } from "../../shared/lib";
 import { CheckCircle, Circle, Upload, X, Image as ImageIcon, Edit2 } from "lucide-react";
 import styles from "./SellerPages.module.css";
 import { useAuth } from "../../shared/context/AuthContext.jsx";
+
+const getProductImageUrl = (image) => image?.image_url || image?.image || "";
 
 const ProductModal = ({ onClose, onSave, product = null }) => {
   const [form, setForm] = useState({
@@ -21,7 +24,7 @@ const ProductModal = ({ onClose, onSave, product = null }) => {
     is_published: product?.is_published ?? true,
   });
   const [images, setImages] = useState([]);
-  const [existingImages, setExistingImages] = useState(product?.images || []);
+  const [existingImages] = useState(product?.images || []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,21 +72,9 @@ const ProductModal = ({ onClose, onSave, product = null }) => {
         savedProduct = await createSellerProduct(productData);
       }
 
-      // Загружаем изображения
       if (images.length > 0) {
-        const token = localStorage.getItem("cm_access_token");
         for (const image of images) {
-          const formData = new FormData();
-          formData.append("product", savedProduct.id);
-          formData.append("image", image);
-
-          await fetch(`${window.location.origin}/api/images/`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-          });
+          await uploadSellerProductImage(savedProduct.id, image);
         }
       }
 
@@ -171,7 +162,7 @@ const ProductModal = ({ onClose, onSave, product = null }) => {
               <div className={styles.imagePreviewGrid}>
                 {existingImages.map((img, idx) => (
                   <div key={idx} className={styles.imagePreview}>
-                    <img src={img.image_url} alt="" />
+                    <img src={getProductImageUrl(img)} alt="" />
                     <div className={styles.imageLabel}>Загружено</div>
                   </div>
                 ))}
@@ -250,7 +241,7 @@ export const SellerProductsPage = () => {
 
   const loadProducts = () => {
     setIsLoading(true);
-    fetchSellerProducts({ page, page_size: ITEMS_PER_PAGE })
+    return fetchSellerProducts({ page, page_size: ITEMS_PER_PAGE })
       .then((data) => {
         if (data && typeof data === "object" && Array.isArray(data.results)) {
           setProducts(data.results);
@@ -298,6 +289,12 @@ export const SellerProductsPage = () => {
     await loadProducts();
   };
 
+  const sellerName =
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+    user?.username ||
+    user?.email ||
+    "Продавец";
+
   return (
     <main className={styles.page}>
       <div className={styles.pageHeader}>
@@ -340,7 +337,10 @@ export const SellerProductsPage = () => {
                 <div key={product.id} className={styles.productCard}>
                   <div className={styles.productImage}>
                     {product.images && product.images.length > 0 ? (
-                      <img src={product.images[0].image_url} alt={product.name} />
+                      <img
+                        src={getProductImageUrl(product.images[0])}
+                        alt={product.name}
+                      />
                     ) : (
                       <div className={styles.productImagePlaceholder}>
                         <ImageIcon size={32} />
@@ -470,6 +470,14 @@ export const SellerProductsPage = () => {
           product={editingProduct}
         />
       )}
+
+      <section className={styles.sellerProfile}>
+        <div>
+          <span className={styles.sellerProfileLabel}>Вы вошли как</span>
+          <strong className={styles.sellerProfileName}>{sellerName}</strong>
+        </div>
+        <span className={styles.sellerProfileRole}>Продавец</span>
+      </section>
     </main>
   );
 };
