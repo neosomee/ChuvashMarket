@@ -14,8 +14,10 @@ export const apiClient = async (path, options = {}) => {
   const url = `${baseUrl}${path}`;
 
   const token = getAccessToken();
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };

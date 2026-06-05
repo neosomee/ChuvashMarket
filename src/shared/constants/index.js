@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
   SELLER_PRODUCTS: "/api/sellers/products/",
   SELLER_ORDERS: "/api/sellers/orders/",
   SELLER_ANALYTICS: "/api/sellers/analytics/",
+  IMAGES: "/api/images/",
   CURRENT_USER: "/api/auth/user/",
 };
 

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchSellerAnalytics } from "../../shared/api/seller";
+import { ROUTES } from "../../shared/constants";
 import { formatPrice } from "../../shared/lib";
 import styles from "./SellerPages.module.css";
 import { useAuth } from "../../shared/context/AuthContext.jsx";
@@ -21,6 +23,8 @@ import {
   CheckCircle,
   Star,
   Users,
+  PlusCircle,
+  ClipboardList,
 } from "lucide-react";
 
 export const SellerDashboardPage = () => {
@@ -82,6 +86,19 @@ export const SellerDashboardPage = () => {
             Аналитика и метрики вашего магазина
           </p>
         </div>
+        <section className={styles.sellerActions}>
+          <Link
+            to={`${ROUTES.SELLER_PRODUCTS}?action=create`}
+            className={styles.sellerActionPrimary}
+          >
+            <PlusCircle size={22} />
+            <span>Разместить товар</span>
+          </Link>
+          <Link to={ROUTES.SELLER_PRODUCTS} className={styles.sellerActionLink}>
+            <ClipboardList size={20} />
+            <span>Управлять товарами</span>
+          </Link>
+        </section>
         <section className={styles.emptyState}>
           <div className={styles.emptyStateIcon}></div>
           <h2 className={styles.emptyStateTitle}>Нет данных для отображения</h2>
@@ -128,6 +145,20 @@ export const SellerDashboardPage = () => {
           Аналитика и метрики вашего магазина
         </p>
       </div>
+
+      <section className={styles.sellerActions}>
+        <Link
+          to={`${ROUTES.SELLER_PRODUCTS}?action=create`}
+          className={styles.sellerActionPrimary}
+        >
+          <PlusCircle size={22} />
+          <span>Разместить товар</span>
+        </Link>
+        <Link to={ROUTES.SELLER_PRODUCTS} className={styles.sellerActionLink}>
+          <ClipboardList size={20} />
+          <span>Управлять товарами</span>
+        </Link>
+      </section>
 
       {/* Карточки основных метрик */}
       <section className={styles.statsGrid}>
