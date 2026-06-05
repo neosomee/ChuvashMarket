@@ -86,10 +86,7 @@ export const AppRoutes = () => {
         <Route
           path={ROUTES.SELLER_DASHBOARD}
           element={
-            <ProtectedRoute
-              requireRole="seller"
-              roleDeniedElement={<SellerDashboardPage />}
-            >
+            <ProtectedRoute requireRole="seller">
               <SellerDashboardPage />
             </ProtectedRoute>
           }
@@ -97,10 +94,7 @@ export const AppRoutes = () => {
         <Route
           path={ROUTES.SELLER_PRODUCTS}
           element={
-            <ProtectedRoute
-              requireRole="seller"
-              roleDeniedElement={<SellerProductsPage />}
-            >
+            <ProtectedRoute requireRole="seller">
               <SellerProductsPage />
             </ProtectedRoute>
           }
@@ -108,10 +102,7 @@ export const AppRoutes = () => {
         <Route
           path={ROUTES.SELLER_ORDERS}
           element={
-            <ProtectedRoute
-              requireRole="seller"
-              roleDeniedElement={<SellerOrdersPage />}
-            >
+            <ProtectedRoute requireRole="seller">
               <SellerOrdersPage />
             </ProtectedRoute>
           }

@@ -6,7 +6,6 @@ import { formatPrice } from "../../shared/lib";
 import styles from "./SellerPages.module.css";
 import { Tag, ChevronDown, Check, X } from "lucide-react";
 import { ITEMS_PER_PAGE } from "../../shared/constants";
-import { useAuth } from "../../shared/context/AuthContext.jsx";
 
 const STATUS_CONFIG = {
   pending: { label: "Новый", color: "#f59e0b", bg: "#fef3c7" },
@@ -25,7 +24,6 @@ const STATUS_OPTIONS = [
 ];
 
 export const SellerOrdersPage = () => {
-  const { isAuthenticated, user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,9 +35,8 @@ export const SellerOrdersPage = () => {
   const page = Number(searchParams.get("page") || "1");
 
   const loadOrders = () => {
-    if (!isAuthenticated || user?.role !== "seller") return Promise.resolve();
     setIsLoading(true);
-    return fetchSellerOrders({ page, page_size: ITEMS_PER_PAGE })
+    fetchSellerOrders({ page, page_size: ITEMS_PER_PAGE })
       .then((data) => {
         if (data && typeof data === "object" && Array.isArray(data.results)) {
           setOrders(data.results);
@@ -56,21 +53,7 @@ export const SellerOrdersPage = () => {
   useEffect(() => {
     loadOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, isAuthenticated, user?.role]);
-
-  if (!isAuthenticated || user?.role !== "seller") {
-    return (
-      <main className={styles.page}>
-        <h1 className={styles.title}>Заказы по моим товарам</h1>
-        <section className={styles.card}>
-          <p className={styles.hint}>
-            Доступно только для продавцов. Войдите в аккаунт продавца, чтобы
-            управлять заказами.
-          </p>
-        </section>
-      </main>
-    );
-  }
+  }, [page]);
 
   const handleStatusEdit = (orderId, currentStatus) => {
     setEditingStatus(orderId);

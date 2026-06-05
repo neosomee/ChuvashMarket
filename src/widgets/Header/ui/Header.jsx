@@ -55,16 +55,10 @@ export const Header = ({ cartCount = 0 }) => {
             </>
           )}
           {user?.role === "seller" && (
-            <>
-              <NavLink to={ROUTES.SELLER_PRODUCTS} className={navLinkClass}>
-                <Package size={16} />
-                <span>Мои товары</span>
-              </NavLink>
-              <NavLink to={ROUTES.SELLER_DASHBOARD} className={navLinkClass}>
-                <BarChart3 size={16} />
-                <span>Аналитика</span>
-              </NavLink>
-            </>
+            <NavLink to={ROUTES.SELLER_DASHBOARD} className={navLinkClass}>
+              <BarChart3 size={16} />
+              <span>Продавцам</span>
+            </NavLink>
           )}
         </nav>
 

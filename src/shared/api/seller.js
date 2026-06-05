@@ -19,17 +19,6 @@ export const createSellerProduct = (data) =>
     body: JSON.stringify(data),
   });
 
-export const uploadSellerProductImage = (productId, image) => {
-  const formData = new FormData();
-  formData.append("product", productId);
-  formData.append("image", image);
-
-  return apiClient(API_ENDPOINTS.IMAGES, {
-    method: "POST",
-    body: formData,
-  });
-};
-
 export const updateSellerProduct = (id, data) =>
   apiClient(`${API_ENDPOINTS.SELLER_PRODUCTS}${id}/`, {
     method: "PATCH",

@@ -7,34 +7,13 @@ import {
   deleteSellerProduct,
   createSellerProduct,
   updateSellerProduct,
-  uploadSellerProductImage,
 } from "../../shared/api/seller";
 import { formatPrice } from "../../shared/lib";
 import { CheckCircle, Circle, Upload, X, Image as ImageIcon, Edit2 } from "lucide-react";
 import styles from "./SellerPages.module.css";
 import { useAuth } from "../../shared/context/AuthContext.jsx";
 
-const getProductImageUrl = (image) => image?.image_url || image?.image || "";
-
-const getSellerDisplayName = (user) =>
-  [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
-  user?.username ||
-  user?.email ||
-  "Продавец";
-
-const getSellerCompanyName = (user) =>
-  user?.company ||
-  user?.company_name ||
-  user?.shop_name ||
-  user?.store_name ||
-  getSellerDisplayName(user);
-
-const ProductModal = ({
-  onClose,
-  onSave,
-  product = null,
-  sellerCompanyName = "",
-}) => {
+const ProductModal = ({ onClose, onSave, product = null }) => {
   const [form, setForm] = useState({
     name: product?.name || "",
     description: product?.description || "",
@@ -42,7 +21,7 @@ const ProductModal = ({
     is_published: product?.is_published ?? true,
   });
   const [images, setImages] = useState([]);
-  const [existingImages] = useState(product?.images || []);
+  const [existingImages, setExistingImages] = useState(product?.images || []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -90,9 +69,21 @@ const ProductModal = ({
         savedProduct = await createSellerProduct(productData);
       }
 
+      // Загружаем изображения
       if (images.length > 0) {
+        const token = localStorage.getItem("cm_access_token");
         for (const image of images) {
-          await uploadSellerProductImage(savedProduct.id, image);
+          const formData = new FormData();
+          formData.append("product", savedProduct.id);
+          formData.append("image", image);
+
+          await fetch(`${window.location.origin}/api/images/`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
         }
       }
 
@@ -131,16 +122,6 @@ const ProductModal = ({
               onChange={handleChange("name")}
               placeholder="Название товара"
               className={styles.formInput}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Компания / продавец</label>
-            <input
-              type="text"
-              value={sellerCompanyName}
-              className={styles.formInput}
-              readOnly
             />
           </div>
 
@@ -190,7 +171,7 @@ const ProductModal = ({
               <div className={styles.imagePreviewGrid}>
                 {existingImages.map((img, idx) => (
                   <div key={idx} className={styles.imagePreview}>
-                    <img src={getProductImageUrl(img)} alt="" />
+                    <img src={img.image_url} alt="" />
                     <div className={styles.imageLabel}>Загружено</div>
                   </div>
                 ))}
@@ -253,10 +234,23 @@ export const SellerProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page") || "1");
 
+  if (!isAuthenticated || user?.role !== "seller") {
+    return (
+      <main className={styles.page}>
+        <h1 className={styles.title}>Мои товары</h1>
+        <section className={styles.card}>
+          <p className={styles.hint}>
+            Доступно только для продавцов. Войдите в аккаунт или запросите
+            статус продавца.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
   const loadProducts = () => {
-    if (!isAuthenticated || user?.role !== "seller") return Promise.resolve();
     setIsLoading(true);
-    return fetchSellerProducts({ page, page_size: ITEMS_PER_PAGE })
+    fetchSellerProducts({ page, page_size: ITEMS_PER_PAGE })
       .then((data) => {
         if (data && typeof data === "object" && Array.isArray(data.results)) {
           setProducts(data.results);
@@ -272,21 +266,12 @@ export const SellerProductsPage = () => {
 
   useEffect(() => {
     loadProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, isAuthenticated, user?.role]);
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "seller") return;
-    if (searchParams.get("action") !== "create") return;
-
-    setEditingProduct(null);
-    setShowModal(true);
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      next.delete("action");
-      return next;
-    }, { replace: true });
-  }, [isAuthenticated, searchParams, setSearchParams, user?.role]);
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const handleDelete = async (productId) => {
     if (!window.confirm("Вы уверены, что хотите удалить этот товар?")) return;
@@ -312,23 +297,6 @@ export const SellerProductsPage = () => {
   const handleSave = async () => {
     await loadProducts();
   };
-
-  const sellerName = getSellerDisplayName(user);
-  const sellerCompanyName = getSellerCompanyName(user);
-
-  if (!isAuthenticated || user?.role !== "seller") {
-    return (
-      <main className={styles.page}>
-        <h1 className={styles.title}>Мои товары</h1>
-        <section className={styles.card}>
-          <p className={styles.hint}>
-            Доступно только для продавцов. Войдите в аккаунт продавца или
-            запросите статус продавца.
-          </p>
-        </section>
-      </main>
-    );
-  }
 
   return (
     <main className={styles.page}>
@@ -372,10 +340,7 @@ export const SellerProductsPage = () => {
                 <div key={product.id} className={styles.productCard}>
                   <div className={styles.productImage}>
                     {product.images && product.images.length > 0 ? (
-                      <img
-                        src={getProductImageUrl(product.images[0])}
-                        alt={product.name}
-                      />
+                      <img src={product.images[0].image_url} alt={product.name} />
                     ) : (
                       <div className={styles.productImagePlaceholder}>
                         <ImageIcon size={32} />
@@ -503,22 +468,8 @@ export const SellerProductsPage = () => {
           onClose={handleCloseModal}
           onSave={handleSave}
           product={editingProduct}
-          sellerCompanyName={sellerCompanyName}
         />
       )}
-
-      <section className={styles.sellerProfile}>
-        <div>
-          <span className={styles.sellerProfileLabel}>Вы вошли как</span>
-          <strong className={styles.sellerProfileName}>{sellerName}</strong>
-          {sellerCompanyName && sellerCompanyName !== sellerName && (
-            <span className={styles.sellerProfileCompany}>
-              {sellerCompanyName}
-            </span>
-          )}
-        </div>
-        <span className={styles.sellerProfileRole}>Продавец</span>
-      </section>
     </main>
   );
 };

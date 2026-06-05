@@ -2,12 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../constants";
 
-export const ProtectedRoute = ({
-  children,
-  requireAuth = true,
-  requireRole = null,
-  roleDeniedElement = null,
-}) => {
+export const ProtectedRoute = ({ children, requireAuth = true, requireRole = null }) => {
   const { isAuthenticated, user } = useAuth();
 
   // Проверка аутентификации
@@ -17,7 +12,6 @@ export const ProtectedRoute = ({
 
   // Проверка роли
   if (requireRole && user?.role !== requireRole) {
-    if (roleDeniedElement) return roleDeniedElement;
     return <Navigate to={ROUTES.HOME} replace />;
   }
 
